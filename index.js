@@ -2,89 +2,95 @@
 // and sends it up to the socket.io server
 
 const os = require('os')
+const osu = require('node-os-utils')
 const io = require('socket.io-client')
 
 const url = process.env.NODE_ENV === 'LOCAL' ? 'http://127.0.0.1:4000' : 'https://performance-server.mauaznar.com'
-
-let socket = io(url)
-
-socket.on('connect', () => {
-    // console.log('I connected to the socket server... hooray!')
-    // We need a way to identify this machine to whomever concerned
-    const nI = os.networkInterfaces()
-    let macA
-    // loop through all the Ni for this machine and find a non-internal one
-    for(let key in nI) {
-
-        // for testing purposes
-        // macA = Math.floor((Math.random() * 3) + 1)
-        // break;
-
-        if (nI.hasOwnProperty(key)) {
-            if (!nI[key][0].internal) {
-                macA = nI[key][0].mac
-                break;
-            }
-        }
-    }
-
-    // clientauth with single key value
-    socket.emit('clientAuth', '23423')
-
-    performanceData().then(allData => {
-        allData.macA = macA
-        socket.emit('initPerfData', allData)
-    })
+const isDev = process.env.NODE_ENV === 'DEV'
 
 
-    // start sending over data on interval
+
+if (isDev) {
     let perfDataInterval = setInterval(() => {
         performanceData().then(allData => {
-            // console.log(all)
-            allData.macA = macA
-            socket.emit('perfData', allData)
+            console.log(allData)
         })
-    }, 1000)
+        // osu.mem.info().then(data => {
+        //     console.log(data)
+        // })
+        // osu.drive.info()
+        //     .then(info => {
+        //         console.log(info)
+        //     })
+        // os.uptime()
+    }, 5000)
+} else {
+    let socket = io(url)
 
-    socket.on('disconnect', () => {
-        clearInterval(perfDataInterval)
+    socket.on('connect', () => {
+        // console.log('I connected to the socket server... hooray!')
+
+
+        // clientauth with single key value
+        socket.emit('clientAuth', '23423')
+
+        performanceData().then(allData => {
+            socket.emit('initPerfData', allData)
+        })
+
+
+        // start sending over data on interval
+        let perfDataInterval = setInterval(() => {
+            performanceData().then(allData => {
+                socket.emit('perfData', allData)
+            })
+        }, 1000)
+
+        socket.on('disconnect', () => {
+            clearInterval(perfDataInterval)
+        })
+
     })
-
-})
-
-
-// what do we need to know from node about performance
-// cpu load (current)
-// meemory usage: free and total
-// operating system type
-// time the machine ahas been online
-// process information
-// uptime
-// cpu  info
-// type
-// number of cores
-// clock speed
+}
 
 function performanceData () {
     return new Promise(async (resolve, reject) => {
         const cpus = os.cpus()
-        const osType = os.type() === 'Darwin' ? 'mac' : os.type()
+        const osType = os.type() === 'Darwin' ? 'Mac' : os.type()
 
         const upTime = os.uptime()
 
-        const freemem = os.freemem()
+        const memInfo = await osu.mem.info()
+        // const freeMemPercentage = parseFloat((memInfo.freeMemPercentage).toFixed(2))
 
-        const totalmem = os.totalmem()
-
-        const usedmem = totalmem - freemem
-
-        const memusage = Math.floor(usedmem/totalmem * 100) / 100
+        const memusage = parseFloat((memInfo.usedMemPercentage / 100).toFixed(2))
+        const totalmem = parseFloat((memInfo.totalMemMb * 1024 * 1024).toFixed(2))
+        const freemem = parseFloat((memInfo.freeMemMb * 1024 * 1024).toFixed(2))
+        const usedmem = parseFloat((memInfo.usedMemMb * 1024 * 1024).toFixed(2))
 
         const cpuModel = cpus[0].model
         const cpuSpeed = cpus[0].speed
         const numCores = cpus.length
         const cpuLoad = await getCpuLoad()
         const isActive = true
+        // We need a way to identify this machine to whomever concerned
+        const nI = os.networkInterfaces()
+        let macA
+        // loop through all the Ni for this machine and find a non-internal one
+        for(let key in nI) {
+
+            // for testing purposes
+            // macA = Math.floor((Math.random() * 3) + 1)
+            // break;
+
+            if (nI.hasOwnProperty(key)) {
+                if (!nI[key][0].internal) {
+                    macA = nI[key][0].mac
+                    break;
+                }
+            }
+        }
+
         resolve({
             freemem,
             upTime,
@@ -97,6 +103,7 @@ function performanceData () {
             numCores,
             cpuLoad,
             isActive,
+            macA
         })
     })
 }
