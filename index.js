@@ -9,7 +9,7 @@ const url = process.env.NODE_ENV === 'LOCAL' ? 'http://127.0.0.1:4000' : 'https:
 let socket = io(url)
 
 socket.on('connect', () => {
-    console.log('I connected to the socket server... hooray!')
+    // console.log('I connected to the socket server... hooray!')
     // We need a way to identify this machine to whomever concerned
     const nI = os.networkInterfaces()
     let macA
@@ -17,8 +17,8 @@ socket.on('connect', () => {
     for(let key in nI) {
 
         // for testing purposes
-        macA = Math.floor((Math.random() * 3) + 1)
-        break;
+        // macA = Math.floor((Math.random() * 3) + 1)
+        // break;
 
         if (nI.hasOwnProperty(key)) {
             if (!nI[key][0].internal) {
@@ -135,8 +135,6 @@ function getCpuLoad() {
             const end = cpuAverage()
             const idleDifference = end.idle - start.idle
             const totalDifference = end.total - start.total
-            console.log(idleDifference)
-            console.log(totalDifference)
             // calc the % of used cpu
             const percentageCpu = 100 - Math.floor(100 * idleDifference / totalDifference)
             resolve(percentageCpu)
