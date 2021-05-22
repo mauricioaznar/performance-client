@@ -3,12 +3,13 @@
 
 const os = require('os')
 const io = require('socket.io-client')
-let socket = io('http://127.0.0.1:8181')
 
-console.log(process.env.NODE_ENV)
+const url = process.env.NODE_ENV === 'LOCAL' ? 'http://127.0.0.1:4000' : 'https://performance-server.mauaznar.com'
+
+let socket = io(url)
 
 socket.on('connect', () => {
-    // console.log('I connected to the socket server... hooray!')
+    console.log('I connected to the socket server... hooray!')
     // We need a way to identify this machine to whomever concerned
     const nI = os.networkInterfaces()
     let macA
