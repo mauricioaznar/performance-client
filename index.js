@@ -4,6 +4,7 @@
 const os = require('os')
 const osu = require('node-os-utils')
 const io = require('socket.io-client')
+const pm2 = require('pm2')
 
 const url = process.env.NODE_ENV === 'LOCAL' ? 'http://127.0.0.1:4000' : 'https://performance-server.mauaznar.com'
 const isDev = process.env.NODE_ENV === 'DEV'
@@ -42,6 +43,7 @@ if (isDev) {
         // start sending over data on interval
         let perfDataInterval = setInterval(() => {
             performanceData().then(allData => {
+                console.log(allData)
                 socket.emit('perfData', allData)
             })
         }, 1000)
@@ -63,10 +65,18 @@ function performanceData () {
         const memInfo = await osu.mem.info()
         // const freeMemPercentage = parseFloat((memInfo.freeMemPercentage).toFixed(2))
 
-        const memusage = parseFloat((memInfo.usedMemPercentage / 100).toFixed(2))
-        const totalmem = parseFloat((memInfo.totalMemMb * 1024 * 1024).toFixed(2))
-        const freemem = parseFloat((memInfo.freeMemMb * 1024 * 1024).toFixed(2))
-        const usedmem = parseFloat((memInfo.usedMemMb * 1024 * 1024).toFixed(2))
+        const memusage = parseFloat((memInfo.usedMemPercentage).toFixed(2))
+        const totalmem = memInfo.totalMemMb
+        const freemem = memInfo.freeMemMb
+        const usedmem = memInfo.usedMemMb
+
+        const driveInfo = await osu.drive.info()
+
+        // const hostname = await osu.os.hostname()
+
+        // console.log(hostname)
+
+        const pm2List = await connectPm2()
 
         const cpuModel = cpus[0].model
         const cpuSpeed = cpus[0].speed
@@ -92,10 +102,12 @@ function performanceData () {
         }
 
         resolve({
-            freemem,
+            ...driveInfo,
+            pm2List,
             upTime,
             osType,
             totalmem,
+            freemem,
             usedmem,
             memusage,
             cpuModel,
@@ -131,6 +143,20 @@ function cpuAverage() {
         total: totalMs / cpusDynamic.length
     }
 }
+
+function connectPm2() {
+    return new Promise(((resolve, reject) => {
+        pm2.connect(err => {
+            if (err) {
+                reject('pm2 error')
+            }
+            pm2.list((err, list) => {
+                resolve(list)
+            })
+        })
+    }))
+}
+
 
 // because the times property is time since boot, we will get
 // now times, and 100ms from now times. Compare them, that will
