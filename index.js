@@ -34,10 +34,13 @@ if (isDev) {
 
         // start sending over data on interval
         let perfDataInterval = setInterval(() => {
-            performanceData().then(allData => {
-                console.log(allData)
-                socket.emit('perfData', allData)
-            })
+            performanceData()
+                .then(allData => {
+                    socket.emit('perfData', allData)
+                })
+                .catch(err => {
+                    console.error(err)
+                })
         }, 1000)
 
         socket.on('disconnect', () => {
@@ -54,20 +57,43 @@ function performanceData () {
 
         const upTime = os.uptime()
 
-        const memInfo = await osu.mem.info()
+        let memusage
+        let totalmem
+        let freemem
+        let usedmem
+        try {
+            const memInfo = await osu.mem.info()
+            memusage = parseFloat((memInfo.usedMemPercentage).toFixed(2))
+            totalmem = memInfo.totalMemMb
+            freemem = memInfo.freeMemMb
+            usedmem = memInfo.usedMemMb
+        } catch (e) {
+            memusage = '-'
+            totalmem = '-'
+            freemem = '-'
+            usedmem = '-'
+        }
         // const freeMemPercentage = parseFloat((memInfo.freeMemPercentage).toFixed(2))
 
-        const memusage = parseFloat((memInfo.usedMemPercentage).toFixed(2))
-        const totalmem = memInfo.totalMemMb
-        const freemem = memInfo.freeMemMb
-        const usedmem = memInfo.usedMemMb
 
-        const driveInfo = await osu.drive.info()
 
-        const diskusage = driveInfo.usedPercentage
-        const diskused = driveInfo.usedGb
-        const diskfree = driveInfo.freeGb
-        const disktotal = driveInfo.totalGb
+
+        let diskusage
+        let diskused
+        let diskfree
+        let disktotal
+        try {
+            const driveInfo = await osu.drive.info()
+            diskusage = driveInfo.usedPercentage
+            diskused = driveInfo.usedGb
+            diskfree = driveInfo.freeGb
+            disktotal = driveInfo.totalGb
+        } catch (e) {
+            diskusage = '-'
+            diskused = '-'
+            disktotal = '-'
+            diskfree = '-'
+        }
 
 
         const hostname = await osu.os.hostname()
@@ -153,6 +179,9 @@ function connectPm2() {
                 reject('pm2 error')
             }
             pm2.list((err, list) => {
+                if (err) {
+                    reject(err)
+                }
                 resolve(list.map(pm2App => {
                     return {
                         pm_id: pm2App.pm_id,
