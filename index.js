@@ -13,17 +13,9 @@ const isDev = process.env.NODE_ENV === 'DEV'
 
 if (isDev) {
     let perfDataInterval = setInterval(() => {
-        performanceData().then(allData => {
-            console.log(allData)
+        const pm2List = connectPm2().then(result => {
+            console.log(result)
         })
-        // osu.mem.info().then(data => {
-        //     console.log(data)
-        // })
-        // osu.drive.info()
-        //     .then(info => {
-        //         console.log(info)
-        //     })
-        // os.uptime()
     }, 5000)
 } else {
     let socket = io(url)
@@ -72,14 +64,13 @@ function performanceData () {
 
         const driveInfo = await osu.drive.info()
 
-
         const diskusage = driveInfo.usedPercentage
         const diskused = driveInfo.usedGb
         const diskfree = driveInfo.freeGb
         const disktotal = driveInfo.totalGb
 
 
-        // const hostname = await osu.os.hostname()
+        const hostname = await osu.os.hostname()
 
         // console.log(hostname)
 
@@ -109,6 +100,7 @@ function performanceData () {
         }
 
         resolve({
+            hostname,
             diskusage,
             diskused,
             diskfree,
@@ -161,7 +153,15 @@ function connectPm2() {
                 reject('pm2 error')
             }
             pm2.list((err, list) => {
-                resolve(list)
+                resolve(list.map(pm2App => {
+                    return {
+                        pm_id: pm2App.pm_id,
+                        name: pm2App.name,
+                        memory: pm2App.monit.memory / 1024 / 1024,
+                        cpu: pm2App.monit.cpu,
+                        status: pm2App.pm2_env.status
+                    }
+                }))
             })
         })
     }))
