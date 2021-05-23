@@ -72,6 +72,13 @@ function performanceData () {
 
         const driveInfo = await osu.drive.info()
 
+
+        const diskusage = driveInfo.usedPercentage
+        const diskused = driveInfo.usedGb
+        const diskfree = driveInfo.freeGb
+        const disktotal = driveInfo.totalGb
+
+
         // const hostname = await osu.os.hostname()
 
         // console.log(hostname)
@@ -102,7 +109,10 @@ function performanceData () {
         }
 
         resolve({
-            ...driveInfo,
+            diskusage,
+            diskused,
+            diskfree,
+            disktotal,
             pm2List,
             upTime,
             osType,
