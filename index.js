@@ -98,10 +98,7 @@ function performanceData () {
 
         const hostname = await osu.os.hostname()
 
-        // console.log(hostname)
-
-        // const pm2List = await connectPm2()
-        const pm2List = []
+        const pm2List = await connectPm2()
 
         const cpuModel = cpus[0].model
         const cpuSpeed = cpus[0].speed
