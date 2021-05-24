@@ -4,7 +4,6 @@
 const os = require('os')
 const osu = require('node-os-utils')
 const io = require('socket.io-client')
-const pm2 = require('pm2')
 
 const url = process.env.NODE_ENV === 'LOCAL' ? 'http://127.0.0.1:4000' : 'https://performance-server.mauaznar.com'
 const isDev = process.env.NODE_ENV === 'DEV'
@@ -82,23 +81,21 @@ function performanceData () {
         let diskused = '-'
         let diskfree = '-'
         let disktotal = '-'
-        // try {
-        //     const driveInfo = await osu.drive.info()
-        //     diskusage = driveInfo.usedPercentage
-        //     diskused = driveInfo.usedGb
-        //     diskfree = driveInfo.freeGb
-        //     disktotal = driveInfo.totalGb
-        // } catch (e) {
-        //     diskusage = '-'
-        //     diskused = '-'
-        //     disktotal = '-'
-        //     diskfree = '-'
-        // }
+        try {
+            const driveInfo = await osu.drive.info()
+            diskusage = driveInfo.usedPercentage
+            diskused = driveInfo.usedGb
+            diskfree = driveInfo.freeGb
+            disktotal = driveInfo.totalGb
+        } catch (e) {
+            diskusage = '-'
+            diskused = '-'
+            disktotal = '-'
+            diskfree = '-'
+        }
 
 
         const hostname = await osu.os.hostname()
-
-        const pm2List = await connectPm2()
 
         const cpuModel = cpus[0].model
         const cpuSpeed = cpus[0].speed
@@ -129,7 +126,7 @@ function performanceData () {
             diskused,
             diskfree,
             disktotal,
-            pm2List,
+            pm2List: [],
             upTime,
             osType,
             totalmem,
@@ -169,31 +166,6 @@ function cpuAverage() {
         total: totalMs / cpusDynamic.length
     }
 }
-
-function connectPm2() {
-    return new Promise(((resolve, reject) => {
-        pm2.connect(err => {
-            if (err) {
-                reject('pm2 error')
-            }
-            pm2.list((err, list) => {
-                if (err) {
-                    reject(err)
-                }
-                resolve(list.map(pm2App => {
-                    return {
-                        pm_id: pm2App.pm_id,
-                        name: pm2App.name,
-                        memory: pm2App.monit.memory / 1024 / 1024,
-                        cpu: pm2App.monit.cpu,
-                        status: pm2App.pm2_env.status
-                    }
-                }))
-            })
-        })
-    }))
-}
-
 
 // because the times property is time since boot, we will get
 // now times, and 100ms from now times. Compare them, that will
