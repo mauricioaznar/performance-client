@@ -78,35 +78,35 @@ function performanceData () {
 
 
 
-        let diskusage
-        let diskused
-        let diskfree
-        let disktotal
-        try {
-            const driveInfo = await osu.drive.info()
-            diskusage = driveInfo.usedPercentage
-            diskused = driveInfo.usedGb
-            diskfree = driveInfo.freeGb
-            disktotal = driveInfo.totalGb
-        } catch (e) {
-            diskusage = '-'
-            diskused = '-'
-            disktotal = '-'
-            diskfree = '-'
-        }
+        let diskusage = '-'
+        let diskused = '-'
+        let diskfree = '-'
+        let disktotal = '-'
+        // try {
+        //     const driveInfo = await osu.drive.info()
+        //     diskusage = driveInfo.usedPercentage
+        //     diskused = driveInfo.usedGb
+        //     diskfree = driveInfo.freeGb
+        //     disktotal = driveInfo.totalGb
+        // } catch (e) {
+        //     diskusage = '-'
+        //     diskused = '-'
+        //     disktotal = '-'
+        //     diskfree = '-'
+        // }
 
 
         const hostname = await osu.os.hostname()
 
         // console.log(hostname)
 
-        const pm2List = await connectPm2()
+        // const pm2List = await connectPm2()
+        const pm2List = []
 
         const cpuModel = cpus[0].model
         const cpuSpeed = cpus[0].speed
         const numCores = cpus.length
-        // const cpuLoad = await getCpuLoad()
-        const cpuLoad = 0
+        const cpuLoad = await getCpuLoad()
         const isActive = true
         // We need a way to identify this machine to whomever concerned
         const nI = os.networkInterfaces()
