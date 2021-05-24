@@ -51,7 +51,7 @@ if (isDev) {
 }
 
 function performanceData () {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
         const cpus = os.cpus()
         const osType = os.type() === 'Darwin' ? 'Mac' : os.type()
 
@@ -105,7 +105,8 @@ function performanceData () {
         const cpuModel = cpus[0].model
         const cpuSpeed = cpus[0].speed
         const numCores = cpus.length
-        const cpuLoad = await getCpuLoad()
+        // const cpuLoad = await getCpuLoad()
+        const cpuLoad = 0
         const isActive = true
         // We need a way to identify this machine to whomever concerned
         const nI = os.networkInterfaces()
