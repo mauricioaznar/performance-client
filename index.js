@@ -126,7 +126,6 @@ function performanceData () {
             diskused,
             diskfree,
             disktotal,
-            pm2List: [],
             upTime,
             osType,
             totalmem,
