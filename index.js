@@ -40,7 +40,7 @@ if (isDev) {
                 .catch(err => {
                     console.error(err)
                 })
-        }, 100)
+        }, 1000)
 
         socket.on('disconnect', () => {
             clearInterval(perfDataInterval)
